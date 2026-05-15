@@ -1,10 +1,13 @@
+# Compose parametrizado para prod y dev (WP-only, sin Next.js).
+# Variables en .env: INSTANCE, TRAEFIK_ROUTER, TRAEFIK_RULE, TRAEFIK_MIDDLEWARES, DOMAIN_REGEX, DOMAIN_APEX, etc.
+
 services:
 
-  db_id_prod:
+  db:
     image: mariadb:10.11
-    container_name: db_id_prod
+    container_name: db_${INSTANCE}
     restart: unless-stopped
-    mem_limit: 1024m
+    mem_limit: ${DB_MEM:-1024m}
     env_file: .env
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -24,11 +27,11 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - wp_id_prod_net
+      - internal
 
-  redis_id_prod:
+  redis:
     image: redis:7-alpine
-    container_name: redis_id_prod
+    container_name: redis_${INSTANCE}
     restart: unless-stopped
     mem_limit: 256m
     command: redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru
@@ -38,70 +41,72 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - wp_id_prod_net
+      - internal
 
-  wp_id_prod:
+  wp:
     build: .
-    container_name: wp_id_prod
+    container_name: wp_${INSTANCE}
     restart: unless-stopped
-    mem_limit: 1024m
+    mem_limit: ${WP_MEM:-1024m}
     env_file: .env
     environment:
-      WORDPRESS_DB_HOST: ${WORDPRESS_DB_HOST}
-      WORDPRESS_DB_USER: ${WORDPRESS_DB_USER}
-      WORDPRESS_DB_PASSWORD: ${WORDPRESS_DB_PASSWORD}
-      WORDPRESS_DB_NAME: ${WORDPRESS_DB_NAME}
+      WORDPRESS_DB_HOST: db_${INSTANCE}
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
     depends_on:
-      db_id_prod:
+      db:
         condition: service_healthy
-      redis_id_prod:
+      redis:
         condition: service_healthy
     volumes:
       - ./html:/var/www/html
       - ./php/php.ini:/usr/local/etc/php/conf.d/custom.ini
       - ./php/www-custom.conf:/usr/local/etc/php-fpm.d/zz-custom.conf
-      - nginx_cache_id_prod:/var/cache/nginx/fastcgi
+      - nginx_cache:/var/cache/nginx/fastcgi
     networks:
-      - wp_id_prod_net
+      - internal
 
-  nginx_id_prod:
+  nginx:
     image: nginx:alpine
-    container_name: nginx_id_prod
+    container_name: nginx_${INSTANCE}
     restart: unless-stopped
     mem_limit: 128m
     volumes:
       - ./html:/var/www/html
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-      - nginx_cache_id_prod:/var/cache/nginx/fastcgi
+      - nginx_cache:/var/cache/nginx/fastcgi
     depends_on:
-      - wp_id_prod
+      - wp
     networks:
       - traefik_public
-      - wp_id_prod_net
+      - internal
     labels:
       - "traefik.enable=true"
 
       # ----- ROUTER -----
-      - "traefik.http.routers.idprod.rule=Host(`idivebcn.com`) || Host(`www.idivebcn.com`)"
-      - "traefik.http.routers.idprod.entrypoints=websecure"
-      - "traefik.http.routers.idprod.tls=true"
-      - "traefik.http.routers.idprod.tls.certresolver=cloudflare"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.rule=${TRAEFIK_RULE}"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.entrypoints=websecure"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.tls=true"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.tls.certresolver=cloudflare"
 
-      # ----- MIDDLEWARE www -> no-www redirect + HTTPS headers -----
-      - "traefik.http.middlewares.idprod-www-redirect.redirectregex.regex=^https://www\\.idivebcn\\.com/(.*)"
-      - "traefik.http.middlewares.idprod-www-redirect.redirectregex.replacement=https://idivebcn.com/$${1}"
-      - "traefik.http.middlewares.idprod-www-redirect.redirectregex.permanent=true"
-      - "traefik.http.middlewares.idprod-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
-      - "traefik.http.routers.idprod.middlewares=idprod-www-redirect,idprod-headers"
+      # ----- MIDDLEWARES (se aplican los listados en TRAEFIK_MIDDLEWARES) -----
+      - "traefik.http.middlewares.${TRAEFIK_ROUTER}-www-redirect.redirectregex.regex=^https://www\\.${DOMAIN_REGEX}/(.*)"
+      - "traefik.http.middlewares.${TRAEFIK_ROUTER}-www-redirect.redirectregex.replacement=https://${DOMAIN_APEX}/$${1}"
+      - "traefik.http.middlewares.${TRAEFIK_ROUTER}-www-redirect.redirectregex.permanent=true"
+      - "traefik.http.middlewares.${TRAEFIK_ROUTER}-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.${TRAEFIK_ROUTER}.middlewares=${TRAEFIK_MIDDLEWARES}"
 
       # ----- SERVICE -----
-      - "traefik.http.services.idprod.loadbalancer.server.port=80"
+      - "traefik.http.services.${TRAEFIK_ROUTER}.loadbalancer.server.port=80"
 
 volumes:
-  nginx_cache_id_prod:
+  nginx_cache:
+    name: nginx_cache_${INSTANCE}
 
 networks:
   traefik_public:
     external: true
-  wp_id_prod_net:
+  internal:
+    name: wp_${INSTANCE}_net
     driver: bridge
