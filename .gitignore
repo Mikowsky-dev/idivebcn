@@ -1,0 +1,64 @@
+# =============================================
+# WordPress Core (no trackear, se instala via Docker)
+# =============================================
+html/wp-admin/
+html/wp-includes/
+html/*.php
+html/license.txt
+html/readme.html
+html/wp-config-sample.php
+html/wp-config-docker.php
+
+# WordPress config (contiene credenciales DB)
+html/wp-config.php
+
+# =============================================
+# wp-content
+# Trackeamos solo: child theme + mu-plugins (codigo custom)
+# =============================================
+html/wp-content/uploads/
+html/wp-content/upgrade/
+html/wp-content/upgrade-temp-backup/
+html/wp-content/cache/
+html/wp-content/plugins/
+html/wp-content/themes/hello-elementor/
+html/wp-content/themes/index.php
+html/wp-content/index.php
+html/wp-content/languages/
+html/wp-content/debug.log
+html/wp-content/ai1wm-backups/
+html/wp-content/backup-db/
+html/wp-content/object-cache.php
+html/wp-content/advanced-cache.php
+html/wp-content/temp-write-test-*
+html/wp-content/maintenance/
+html/.htaccess
+
+# =============================================
+# Env (credenciales)
+# =============================================
+.env
+.env.local
+.env.production
+
+# =============================================
+# Database (MariaDB data)
+# =============================================
+db/
+
+# =============================================
+# Backups
+# =============================================
+backups/
+
+# =============================================
+# OS / IDE
+# =============================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.bak
