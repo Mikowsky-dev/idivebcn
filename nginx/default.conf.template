@@ -97,7 +97,7 @@ server {
     location = /wp-login.php {
         limit_req zone=loginidprod burst=3 nodelay;
         include fastcgi_params;
-        fastcgi_pass wp_id_prod:9000;
+        fastcgi_pass ${INSTANCE_WP}:9000;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
     }
@@ -115,7 +115,7 @@ server {
 
     location ~ \.php$ {
         include fastcgi_params;
-        fastcgi_pass wp_id_prod:9000;
+        fastcgi_pass ${INSTANCE_WP}:9000;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
         fastcgi_param HTTP_X_FORWARDED_PROTO $http_x_forwarded_proto;
