@@ -78,6 +78,7 @@ services:
     volumes:
       - ./html:/var/www/html
       - ./nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/dev-noindex.conf:/etc/nginx/snippets/dev-noindex.conf:ro
       - nginx_cache:/var/cache/nginx/fastcgi
     depends_on:
       - wp

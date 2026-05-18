@@ -53,6 +53,9 @@ server {
 
     client_max_body_size 512M;
 
+    # Optional dev-only snippets (e.g. dev-noindex.conf). Glob = tolerante si vacío en prod.
+    include /etc/nginx/snippets/*.conf;
+
     # Security headers
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
