@@ -31,8 +31,10 @@ completa, valores de rollback y verificación).
   hay que purgar la entrada o el PDF sale idéntico. Purga:
   `docker exec nginx_id_prod sh -c 'grep -rl "p=<id>" /var/cache/nginx/fastcgi | xargs rm -f'`
 - Escribir postmeta por SQL directo deja Redis obsoleto: usar `wp eval` / wp-cli.
-- **Bug latente:** `_message_is_enabled=1` pero `_message_pos` vacío → la
-  dedicatoria del cliente se renderiza con `display:none`, nunca sale impresa.
+- **No es un bug:** `_message_is_enabled=1` con `_message_pos` vacío hace que la
+  dedicatoria se renderice con `display:none`. Es intencionado: en el bono solo
+  van el nombre del destinatario y el código. La dedicatoria viaja en el cuerpo
+  del email al destinatario (email-voucher-recipient.php:171-230). No tocar.
 - Los emails de bono salen en inglés en una tienda en español (cadenas del plugin
   sin traducir).
 - El texto "Este vale es válido hasta fin de 2022" está quemado en la imagen de

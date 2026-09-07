@@ -137,11 +137,13 @@ UPDATE wpidive_postmeta
 -- de nginx/default.conf para que estas URLs no se cacheen nunca.
 
 -- ---------------------------------------------------------------------
--- PENDIENTE / BUG LATENTE: el mensaje de dedicatoria no se imprime
+-- NO es un bug: la dedicatoria no va impresa en el bono (por diseño)
 -- ---------------------------------------------------------------------
--- `_message_is_enabled = 1` (el cliente puede escribir una dedicatoria en
--- la ficha de producto) pero `_message_pos` está VACÍO. Cuando no hay
--- posición, el plugin emite `display: none` para ese campo
--- (src/frontend/class-wc-pdf-product-vouchers-frontend.php:274-281), o sea
--- que la dedicatoria que escriba el cliente NO saldrá nunca en el bono.
--- Requiere decidir dónde colocarla en el diseño.
+-- `_message_is_enabled = 1` y `_message_pos` VACÍO. Sin posición, el plugin
+-- emite `display: none` para ese campo
+-- (src/frontend/class-wc-pdf-product-vouchers-frontend.php:274-281).
+-- Es INTENCIONADO: en el bono solo salen el nombre del destinatario y el
+-- código. La dedicatoria que escribe el cliente no se pierde, viaja en el
+-- CUERPO del email al destinatario
+-- (src/emails/class-wc-pdf-product-vouchers-email-voucher-recipient.php:171-230).
+-- No tocar `_message_pos`.
