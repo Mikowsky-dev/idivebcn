@@ -39,3 +39,25 @@ completa, valores de rollback y verificación).
   sin traducir).
 - El texto "Este vale es válido hasta fin de 2022" está quemado en la imagen de
   fondo. Pendiente de rediseño por parte del cliente (invierno 2026).
+
+### Estado del reenvío a clientes (2026-09-07)
+
+- **Pedido 5285 (hoy)** — bono 5286 regenerado y **reenviados los 2 emails** a la
+  clienta (comprador + destinatario, ambos a `rodriguezrojasflorines@gmail.com`).
+  Log WP Mail SMTP ids 2740 y 2741.
+- **Pendientes de decisión de iDive** (Miquel habla con ellos el 2026-09-08): 4 bonos
+  con el PDF en blanco, sin regenerar y sin reenviar.
+
+  | Voucher | Pedido | Fecha |
+  |---|---|---|
+  | 4979 | 4978 | 2026-04-22 |
+  | 4986 | 4985 | 2026-04-25 |
+  | 5063 | 5062 | 2026-06-12 |
+  | 5183 | 5182 | 2026-07-30 |
+
+  Para repararlos, por cada voucher: `update_post_meta(<vid>, "_thumbnail_id", 4974)`,
+  purgar la caché de nginx de su URL de render, `(new WC_Voucher(<vid>))->generate_pdf()`
+  y, si se quiere reenviar, `trigger_voucher(<vid>)` sobre las clases
+  `WC_PDF_Product_Vouchers_Email_Voucher_Purchaser` / `..._Recipient`.
+
+- **Pendiente aparte:** los emails de bono salen en inglés (Fase 4, sin empezar).
