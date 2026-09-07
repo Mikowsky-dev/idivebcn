@@ -9,3 +9,5 @@
 - Producción funcional en patrón nuevo
 - VPS viejo: containers parados (no destruidos)
 - Repo GitHub: Mikowsky-dev/idivebcn (rama main)
+- Pendiente (08-sep-2026): 4 bonos de regalo con PDF en blanco, a la espera de lo que decida iDive sobre regenerar/reenviar. Ver [bugs.md](bugs.md).
+- Pendiente: traducir al español los 2 emails del plugin de bonos (salen en inglés).
