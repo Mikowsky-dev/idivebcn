@@ -91,3 +91,57 @@ SELECT p.ID, p.post_title, p.post_date
  WHERE p.post_type = 'wc_voucher'
    AND m.meta_value = 4971
  ORDER BY p.ID DESC;
+
+-- =====================================================================
+-- FASE 2 (verificación visual): reposicionar el número de bono
+-- =====================================================================
+-- Al regenerar el bono 5286 con el fondo correcto se vio que el código
+-- se imprimía FUERA de la caja negra del diseño, por encima de su propia
+-- etiqueta "CÓDIGO". Nadie lo había visto nunca porque el PDF estaba roto
+-- desde el día en que se colocaron estas coordenadas (22/04/2026).
+--
+-- Medidas sobre el PNG de fondo (873x619):
+--   caja negra    x 516..670   y 527..572
+--   etiqueta      "CÓDIGO"     x 520..562   y 531..542
+--   -> el código va justo debajo de la etiqueta, alineado a la izquierda.
+--
+-- Aplicado con wp-cli:
+--   update_post_meta(99, "_voucher_number_pos", "518,543,210,26");
+--   update_post_meta(99, "_voucher_number_text_align", "left");
+--
+-- Valores previos (rollback): "518,521,172,37" / "center"
+
+UPDATE wpidive_postmeta
+   SET meta_value = '518,543,210,26'
+ WHERE post_id = 99 AND meta_key = '_voucher_number_pos'
+   AND meta_value = '518,521,172,37';
+
+UPDATE wpidive_postmeta
+   SET meta_value = 'left'
+ WHERE post_id = 99 AND meta_key = '_voucher_number_text_align'
+   AND meta_value = 'center';
+
+-- ---------------------------------------------------------------------
+-- OJO al regenerar bonos: caché de nginx
+-- ---------------------------------------------------------------------
+-- El generador de PDF NO renderiza en local: hace un wp_remote_get() a
+-- get_render_url() -> https://idivebcn.com/?post_type=wc_voucher&p=<id>&voucher_key=...
+-- (src/class-wc-pdf-product-vouchers-pdf-generator.php:124) y pasa ese HTML
+-- a dompdf. Esa URL la cachea nginx (fastcgi_cache), así que tras cambiar
+-- la plantilla hay que purgar la entrada o el PDF se regenera IGUAL:
+--
+--   docker exec nginx_id_prod sh -c \
+--     'grep -rl "p=<voucher_id>" /var/cache/nginx/fastcgi | xargs rm -f'
+--
+-- Mejora pendiente: añadir `post_type=wc_voucher` a las reglas $skip_cache
+-- de nginx/default.conf para que estas URLs no se cacheen nunca.
+
+-- ---------------------------------------------------------------------
+-- PENDIENTE / BUG LATENTE: el mensaje de dedicatoria no se imprime
+-- ---------------------------------------------------------------------
+-- `_message_is_enabled = 1` (el cliente puede escribir una dedicatoria en
+-- la ficha de producto) pero `_message_pos` está VACÍO. Cuando no hay
+-- posición, el plugin emite `display: none` para ese campo
+-- (src/frontend/class-wc-pdf-product-vouchers-frontend.php:274-281), o sea
+-- que la dedicatoria que escriba el cliente NO saldrá nunca en el bono.
+-- Requiere decidir dónde colocarla en el diseño.
