@@ -1,0 +1,40 @@
+# CI lean de Puerta 1 (repo existente): no entran secretos nuevos y el compose es válido.
+name: CI
+on:
+  push:
+    branches: [main, develop, dev, 'ci/**']
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  puerta1:
+    name: Puerta 1 (lean) — secretos + compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # gitleaks OSS vía Docker (la action v2 exige licencia en repos privados).
+      - name: Ningún secreto en el árbol
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" \
+            zricethezav/gitleaks:latest detect --source=/repo --redact --no-banner
+      - name: El compose es válido
+        run: |
+          f=$(ls docker-compose.yml docker-compose.yaml compose.yml 2>/dev/null | head -1)
+          if [ -z "$f" ]; then echo "sin compose, nada que validar"; exit 0; fi
+          # crear vacíos los env_file referenciados para que 'config' no falle
+          # crea los env_file referenciados (con prefijo de ruta) y el ".env" pelado de la raíz
+          grep -hoE "[A-Za-z0-9_./-]+\.env(\.[A-Za-z0-9]+)?" "$f" | sort -u | while read -r p; do
+            mkdir -p "$(dirname "$p")" 2>/dev/null; : > "$p" 2>/dev/null || true
+          done
+          : > .env 2>/dev/null || true
+          if [ -f .env.example ]; then
+            docker compose -f "$f" --env-file .env.example config -q
+          else
+            docker compose -f "$f" config -q
+          fi
