@@ -82,7 +82,7 @@ con 301 en vez de 404, que al menos se puede seguir con `curl -L`; aquí ni eso.
 
 ## ✅ Hecho el 15-oct-2026
 
-**Dev cerrado** (commit `025f248`): basic auth en nginx (usuario `superdive`), `X-Robots-Tag`
+**Dev cerrado** (commit `025f248`): basic auth en nginx (usuario **`Idive`**), `X-Robots-Tag`
 por mu-plugin, `robots.txt`, `blog_public=0`, secret-scanner shield, y los guards de correo,
 salida y compras traídos de SuperDive. Arreglada además la herencia de `add_header`, que dejaba
 los tres headers de seguridad sin llegar a ninguna página.
@@ -119,6 +119,17 @@ que había reservado una inmersión que no existe.
 
 Ahora, cuatro capas verificadas ejecutando: basic auth, `X-Robots-Tag`, `robots.txt`,
 `blog_public=0`, más los guards de correo, salida y compras, y el secret-scanner shield.
+
+### Cómo se entra — son DOS puertas
+
+1. **Basic auth del navegador** (la ventanita): usuario **`Idive`**. La contraseña es la misma
+   que en SuperDive; no se escribe aquí ni en el vault.
+2. **Login de la herramienta** (formulario con el logo): un usuario de WordPress con la
+   capability. En dev existe `cierres-test` para probar; en el día a día, **Chiqui entra con el
+   suyo** (`shop_manager`).
+
+Olvidar la segunda es la confusión típica: se pasa el basic auth y parece que «no entra»,
+cuando lo que falta es el login de WordPress.
 
 ⚠️ Esos mu-plugins **comprueban el host** y por eso se pueden versionar: están en el repo, y el
 repo es lo que se despliega. Sin esa comprobación llegarían a producción en el siguiente pull y
