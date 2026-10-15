@@ -30,7 +30,11 @@ Todas en `/opt/wp-idivebcn-prod/.env` (chmod 600):
 ## Stack del sitio (33 plugins notables)
 - E-commerce: WooCommerce + Bookings + Dynamic Pricing + Product Addons + PDF Vouchers + Email Customizer + Side Cart + Permalink Manager + TM Extra Product Options
 - Pagos: Redsys Oficial
-- WPML: core + WC + media + string (aunque /en/ devuelve 404, sitio ES-only)
+- WPML: core + WC + media + string. ⚠️ **NO es ES-only** (corregido 15-oct-2026): hay **tres
+  idiomas activos** — `es`, `en` y `fr` — con negociación por **query string** (`?lang=`, tipo 3).
+  Lo que falla es la forma `/en/`, que devuelve 404; de ahí venía la confusión. Las traducciones
+  tienen **slug propio** (ej. `discover-scuba-diving-booking-en`) y hacen falta **las dos cosas**,
+  slug traducido + `?lang=`, o devuelve 404. Ver [calendario-cierres.md](calendario-cierres.md).
 - Builder: Elementor + Pro
 - Sliders: Nextend Smart Slider 3 Pro
 - Forms: Gravity Forms + multilingual + signature + e2pdf
@@ -61,4 +65,8 @@ Todas en `/opt/wp-idivebcn-prod/.env` (chmod 600):
 - Verificación pre-DNS: HTTP 200 home, /tienda/, /wp-admin/, Redis 388 keys
 
 ## Pendiente
-- Crear repo GitHub (junto con SuperDive)
+- ~~Crear repo GitHub~~ ✅ hecho: `Mikowsky-dev/idivebcn` (rama `dev` aquí, `main` en producción).
+- **Cerrar el entorno dev**: no tiene basic auth, ni shield, ni guards de correo/compras. Detalle
+  y procedimiento en [calendario-cierres.md](calendario-cierres.md).
+- **Headers de seguridad**: configurados y sin llegar al navegador, en dev y en prod.
+- **Aplicar el Calendario de cierres** (medido y listo, ver nota).
