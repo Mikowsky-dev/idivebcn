@@ -2,8 +2,8 @@
 
 Herramienta web para que el centro cierre y reabra días del calendario de reserva sin entrar
 al admin de WordPress. **Ya está en producción en SuperDive** desde el 15-oct-2026
-(`https://superdivetossa.com/calendario-cierres/`), validada por Miquel. Aquí está **medida y
-pendiente de implementar**.
+(`https://superdivetossa.com/calendario-cierres/`), validada por Miquel. Aquí está **aplicada y verificada en dev el
+15-oct-2026**; producción pendiente de confirmación explícita de Miquel.
 
 - **Guía completa de replicación:** `40-runbooks/replicar-calendario-de-cierres.md` del vault.
 - **Código a copiar:** repo `Mikowsky-dev/superdivetossa`, rama `main`, commit `047306b`.
@@ -80,12 +80,37 @@ con 301 en vez de 404, que al menos se puede seguir con `curl -L`; aquí ni eso.
 
 ---
 
-## ⚠️ Lo que hay que arreglar en este entorno ANTES de aplicar nada
+## ✅ Hecho el 15-oct-2026
 
-Medido el 15-oct. Son fallos de iDive, no del calendario, pero el calendario los hace más
-graves porque mete una herramienta de cara al cliente:
+**Dev cerrado** (commit `025f248`): basic auth en nginx (usuario `superdive`), `X-Robots-Tag`
+por mu-plugin, `robots.txt`, `blog_public=0`, secret-scanner shield, y los guards de correo,
+salida y compras traídos de SuperDive. Arreglada además la herencia de `add_header`, que dejaba
+los tres headers de seguridad sin llegar a ninguna página.
 
-### 1. El dev está abierto de par en par
+**Calendario aplicado** (commit `50ec335`): probado en navegador real — entra, carga los cinco
+días ya cerrados, cierra el 13/11/2026, y el cierre sale en **ES y EN**. Sin errores de JS ni
+peticiones fallidas. Entorno devuelto a su estado después (los cinco días de Navidad).
+
+⚠️ **Un fallo que costó encontrar y que conviene recordar:** el guard de host miraba la
+constante `WP_HOME` y, si no, `HTTP_HOST`. **iDive no define `WP_HOME`** y en CLI no hay
+`HTTP_HOST`, así que devolvía `false` y dejaba los cinco guards **apagados**: el correo salía a
+clientes reales y había tres pasarelas de pago activas. Ahora usa la opción `home`, que viene de
+la base de datos y existe igual en web y en CLI. Lo detecté **verificando ejecutando**, no
+leyendo el código.
+
+### ▶️ Pendiente: producción
+
+Guion completo en `40-runbooks/replicar-calendario-de-cierres.md` §3 del vault. Lo que no es
+obvio: **no desplegar con `git merge dev` → `main`** (son ramas de entornos distintos y el merge
+borraría el nginx de producción); se promociona **por ficheros en un worktree**. Y antes del
+pull, mirar si prod corre código sin versionar (`git status` allí) — el 15-oct estaba limpio,
+pero en SuperDive aparecieron 45 líneas vivas y fuera de git.
+
+---
+
+## Lo que ya está resuelto de este entorno
+
+### 1. El dev estaba abierto de par en par — ✅ resuelto
 
 `wp-idivebcn-dev` **no tiene basic auth, ni secret-scanner shield, ni guards de correo o de
 compras**. Su único mu-plugin es `debug-redirect.php`. Si se levanta con una copia de la base
