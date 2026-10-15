@@ -110,37 +110,38 @@ pero en SuperDive aparecieron 45 líneas vivas y fuera de git.
 
 ## Lo que ya está resuelto de este entorno
 
-### 1. El dev estaba abierto de par en par — ✅ resuelto
+### 1. El dev estaba abierto de par en par — ✅ resuelto el 15-oct
 
-`wp-idivebcn-dev` **no tiene basic auth, ni secret-scanner shield, ni guards de correo o de
-compras**. Su único mu-plugin es `debug-redirect.php`. Si se levanta con una copia de la base
-de datos de producción, queda en internet con la configuración de pagos y correos de prod: un
-visitante despistado puede creer que ha reservado una inmersión que no existe.
+Hasta ese día no tenía basic auth, ni shield, ni ningún guard; su único mu-plugin era
+`debug-redirect.php`. Con una copia de la base de datos de producción eso es una tienda en
+internet con la configuración de pagos y correos reales: un visitante despistado podía creer
+que había reservado una inmersión que no existe.
 
-Lo que se montó en SuperDive dev y hay que replicar aquí está en §2.5 del runbook del vault:
-basic auth en nginx (no en Traefik, que obligaría a recrear el contenedor), `X-Robots-Tag` por
-mu-plugin, `robots.txt`, `blog_public=0`, y un mu-plugin que deja cero pasarelas de pago.
+Ahora, cuatro capas verificadas ejecutando: basic auth, `X-Robots-Tag`, `robots.txt`,
+`blog_public=0`, más los guards de correo, salida y compras, y el secret-scanner shield.
 
-⚠️ Esos mu-plugins **deben comprobar el host**: están en el repo, y el repo es lo que se
-despliega. Sin esa comprobación llegan a producción en el siguiente pull y tumban la tienda.
+⚠️ Esos mu-plugins **comprueban el host** y por eso se pueden versionar: están en el repo, y el
+repo es lo que se despliega. Sin esa comprobación llegarían a producción en el siguiente pull y
+tumbarían la tienda — noindex en todo el sitio y cero pasarelas de pago.
 
-### 2. Los headers de seguridad no llegan al navegador
+### 2. Headers de seguridad — ✅ en dev, ❌ PENDIENTE en producción
 
-Ni en dev ni en producción:
+Arreglados en el dev el 15-oct. **En `idivebcn.com` siguen sin llegar:**
 
 ```
 curl -sSI https://idivebcn.com/ | grep -iE "x-content-type|x-frame|referrer"   # vacío
 ```
 
 `add_header` no se hereda en un `location` que define el suyo, y el de PHP define
-`X-Cache-Status`. Causa, arreglo y estado por sitio en
-`40-runbooks/headers-nginx-no-heredados.md` del vault.
+`X-Cache-Status`. El arreglo son solo líneas añadidas y una recarga graceful, sin reiniciar el
+contenedor; en SuperDive se aplicó el 15-oct sin incidencias. Causa, procedimiento y estado por
+sitio en `40-runbooks/headers-nginx-no-heredados.md` del vault.
 
-### 3. Comprobar la ruta de nginx-helper
+### 3. Ruta de nginx-helper — sin comprobar
 
-En SuperDive el botón «Purge Cache» llevaba tiempo purgando un directorio vacío **y
-reportando éxito**, porque la constante se define con el default del plugin y no con el ajuste
-del panel. Comprobar aquí:
+En SuperDive el botón «Purge Cache» llevaba tiempo purgando un directorio vacío **y reportando
+éxito**, porque la constante se define con el default del plugin y no con el ajuste del panel.
+Queda por mirar aquí:
 
 ```bash
 docker exec -u www-data wp_id_dev wp --path=/var/www/html eval \
