@@ -98,13 +98,21 @@ clientes reales y había tres pasarelas de pago activas. Ahora usa la opción `h
 la base de datos y existe igual en web y en CLI. Lo detecté **verificando ejecutando**, no
 leyendo el código.
 
-### ▶️ Pendiente: producción
+### ✅ Producción — desplegada y verificada el 15-oct-2026
 
-Guion completo en `40-runbooks/replicar-calendario-de-cierres.md` §3 del vault. Lo que no es
-obvio: **no desplegar con `git merge dev` → `main`** (son ramas de entornos distintos y el merge
-borraría el nginx de producción); se promociona **por ficheros en un worktree**. Y antes del
-pull, mirar si prod corre código sin versionar (`git status` allí) — el 15-oct estaba limpio,
-pero en SuperDive aparecieron 45 líneas vivas y fuera de git.
+`https://idivebcn.com/calendario-cierres/`. Commits `bfc916d` (headers) y `7c4b32a` (calendario)
+en `main`. Promocionado **por ficheros en un worktree**, nunca con `git merge dev`. El árbol de
+prod quedó **limpio**.
+
+Verificado en vivo: cerrado el 18/12/2026, salió en **ES y EN**, reabierto después. Rutas de
+humo en 200, headers llegando en HTML y estáticos, purga completa de Cloudflare hecha.
+
+⚠️ **Trampa que mordió en el despliegue:** tras el `git pull`, nginx seguía con la config vieja
+aunque `nginx -t` y la recarga pasaran sin quejarse. Docker ata el bind-mount de un fichero
+suelto al **inodo**, y git **reemplaza** el fichero. Se arregla escribiendo el contenido
+**dentro** del contenedor, sin recrearlo. Detalle en
+`40-runbooks/bind-mount-de-fichero-y-git-pull.md` del vault. **Tras un pull que toque un fichero
+montado, comparar el md5 de host y contenedor.**
 
 ---
 
