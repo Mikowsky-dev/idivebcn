@@ -56,7 +56,15 @@ server {
     # Optional dev-only snippets (e.g. dev-noindex.conf). Glob = tolerante si vacío en prod.
     include /etc/nginx/snippets/*.conf;
 
-    # Security headers
+    # Entorno de pruebas cerrado al publico (solo dev). auth_basic SI se hereda a los
+    # locations, al reves que add_header.
+    auth_basic "Entorno de pruebas iDive";
+    auth_basic_user_file /var/www/html/.htpasswd-dev;
+
+    # Security headers.
+    # OJO: add_header NO se hereda en un location que define el suyo. Se repiten abajo en los
+    # dos locations que anaden cabeceras propias; sin repetirlos no llegaban a NINGUNA pagina
+    # HTML. Medido con curl el 15-oct-2026.
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
@@ -89,6 +97,24 @@ server {
 
     location / {
         try_files $uri $uri/ /index.php?$args;
+    }
+
+    # --- Secret-scanner shield: drop probes cheaply (444) before PHP ---
+    # Copiado literal del nginx de produccion para que dev sea copia fiel.
+    location ~ /\.(?!well-known/) {
+        access_log off;
+        log_not_found off;
+        return 444;
+    }
+    location ~* \.(env|sql|sqlite|sqlite3|bak|backup|old|swp|ya?ml|ini|conf|cfg|pem|key|p12|pfx|dist)($|\.) {
+        access_log off;
+        log_not_found off;
+        return 444;
+    }
+    location ~* /(aws[_-]?credentials|credentials\.(txt|json|ya?ml)|secrets?\.(txt|json|ya?ml|env)|ses_config|sendgrid|mandrill|smtp_config|id_rsa|id_dsa)(\.|/|$) {
+        access_log off;
+        log_not_found off;
+        return 444;
     }
 
     location = /xmlrpc.php {
@@ -135,11 +161,19 @@ server {
 
         # Cache status header (HIT/MISS/BYPASS)
         add_header X-Cache-Status $upstream_cache_status;
+
+        # Repetidos a proposito: este location define add_header y pierde los del servidor.
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     }
 
     location ~* \.(jpg|jpeg|gif|png|webp|avif|css|js|ico|svg|woff|woff2|ttf|eot|map)$ {
         expires max;
         add_header Cache-Control "public, immutable";
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
         log_not_found off;
         access_log off;
     }

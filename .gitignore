@@ -65,3 +65,6 @@ Thumbs.db
 .vscode/
 .idea/
 *.bak
+
+# Credencial del basic auth de dev (hash) — nunca al repo
+html/.htpasswd-dev
